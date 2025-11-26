@@ -4,6 +4,17 @@
 A powerful backup mod for Minecraft, supporting Neoforge, Forge and Fabric.
 Many Minecraft versions are supported - request more if the one you want isn't yet supported.
 
+### 🆕 Alpha Update: Minecraft 1.21.10 Support
+**Version 3.8-1.21.10** adds support for Minecraft 1.21.10 (The Copper Age hotfix).
+
+| Requirement | Version |
+|-------------|---------|
+| Fabric Loader | 0.16.9+ |
+| Fabric API | 0.137.0+1.21.10 |
+| Java | 21+ |
+
+⚠️ **Known Issue**: Toast notification background textures are temporarily disabled due to rendering API changes in 1.21.10. Notifications still display with text and progress bars - this is purely cosmetic and does not affect backup functionality.
+
 [Supported Versions](#current-versions)
 
 [Features](#features)
