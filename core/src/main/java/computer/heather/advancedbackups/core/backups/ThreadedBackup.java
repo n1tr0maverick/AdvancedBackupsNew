@@ -162,13 +162,13 @@ public class ThreadedBackup extends Thread {
 
 
     private void makeZipBackup(File file, boolean b) throws InterruptedException, IOException {
-        try {
+        File zip = new File(file.toString() + (this.snapshot ? "/snapshots/" : "/zips/"), backupName + ".zip");
+        ABCore.infoLogger.accept("Preparing " + (this.snapshot ? "snapshot" : "zip") + " backup with name:\n  " + zip.getName().replace("incomplete", this.snapshot ? snapshotName : "backup"));
+        this.output.accept("Preparing " + (this.snapshot ? "snapshot" : "zip") + " backup with name:\n  " + zip.getName().replace("incomplete", this.snapshot ? snapshotName : "backup"));
 
-            File zip = new File(file.toString() + (this.snapshot ? "/snapshots/" : "/zips/"), backupName + ".zip");
-            ABCore.infoLogger.accept("Preparing " + (this.snapshot ? "snapshot" : "zip") + " backup with name:\n  " + zip.getName().replace("incomplete", this.snapshot ? snapshotName : "backup"));
-            this.output.accept("Preparing " + (this.snapshot ? "snapshot" : "zip") + " backup with name:\n  " + zip.getName().replace("incomplete", this.snapshot ? snapshotName : "backup"));
-            FileOutputStream outputStream = new FileOutputStream(zip);
-            ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
+        try (FileOutputStream outputStream = new FileOutputStream(zip);
+            ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+
             zipOutputStream.setLevel((int) ConfigManager.compression.get());
 
             ArrayList<Path> paths = new ArrayList<>();
@@ -228,14 +228,12 @@ public class ThreadedBackup extends Thread {
                     }
                     zipOutputStream.putNextEntry(new ZipEntry(targetFile.toString()));
                     byte[] bytes = new byte[(int) ConfigManager.buffer.get()];
-                    try {
-                        FileInputStream is = new FileInputStream(sourceFile);
+                    try (FileInputStream is = new FileInputStream(sourceFile)) {
                         while (true) {
                             int i = is.read(bytes);
                             if (i < 0) break;
                             zipOutputStream.write(bytes, 0, i);
                         }
-                        is.close();
                     } catch (Exception e) {
                         ABCore.errorLogger.accept("Error backing up file : " + targetFile.toString());
                         ABCore.logStackTrace(e);
@@ -245,8 +243,6 @@ public class ThreadedBackup extends Thread {
                     zipOutputStream.closeEntry();
                     //We need to handle interrupts in various styles in different parts of the process!
                     if (this.isInterrupted()) {
-                        zipOutputStream.close();
-                        //Here, we need to close the outputstream - otherwise we risk a leak!
                         throw new InterruptedException();
                     }
                     index++;
@@ -266,7 +262,6 @@ public class ThreadedBackup extends Thread {
             }
 
             zipOutputStream.flush();
-            zipOutputStream.close();
 
         } catch (IOException e) {
             ABCore.logStackTrace(e);
@@ -376,48 +371,13 @@ public class ThreadedBackup extends Thread {
 
             if (ConfigManager.compressChains.get()) {
                 File zip = differential ? new File(location.toString() + "/differential/", backupName + ".zip") : new File(location.toString() + "/incremental/", backupName + ".zip");
-                FileOutputStream outputStream = new FileOutputStream(zip);
-                ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream);
-                zipOutputStream.setLevel((int) ConfigManager.compression.get());
+                try (FileOutputStream outputStream = new FileOutputStream(zip);
+                    ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+                    zipOutputStream.setLevel((int) ConfigManager.compression.get());
 
-                int max = toBackup.size();
-                int index = 0;
+                    int max = toBackup.size();
+                    int index = 0;
 
-                if (!this.shutdown) {
-                    BackupStatusInstance instance = new BackupStatusInstance();
-                    instance.setAge(System.currentTimeMillis());
-                    instance.setMax(max);
-                    instance.setProgress(index);
-                    instance.setState(BackupStatusInstance.State.STARTED);
-                    BackupStatusInstance.setInstance(instance);
-                }
-                for (Path path : toBackup) {
-                    File sourceFile = new File(ABCore.worldDir.toString(), path.toString());
-                    if (!sourceFile.exists()) {
-                        //Should never happen!
-                        ABCore.errorLogger.accept("File doesn't exist! " + path.toString());
-                        ABCore.logStackTrace(new Exception());
-                        this.erroringFiles.add(path.toString());
-                        continue;
-                    }
-                    zipOutputStream.putNextEntry(new ZipEntry(path.toString()));
-
-                    byte[] bytes = new byte[(int) ConfigManager.buffer.get()];
-                    try {
-                        FileInputStream is = new FileInputStream(sourceFile);
-                        while (true) {
-                            int i = is.read(bytes);
-                            if (i < 0) break;
-                            zipOutputStream.write(bytes, 0, i);
-                        }
-                        is.close();
-                    } catch (Exception e) {
-                        ABCore.errorLogger.accept("Error backing up file : " + path.toString());
-                        ABCore.logStackTrace(e);
-                        this.erroringFiles.add(path.toString());
-                    }
-                    zipOutputStream.closeEntry();
-                    index++;
                     if (!this.shutdown) {
                         BackupStatusInstance instance = new BackupStatusInstance();
                         instance.setAge(System.currentTimeMillis());
@@ -426,16 +386,47 @@ public class ThreadedBackup extends Thread {
                         instance.setState(BackupStatusInstance.State.STARTED);
                         BackupStatusInstance.setInstance(instance);
                     }
+                    for (Path path : toBackup) {
+                        File sourceFile = new File(ABCore.worldDir.toString(), path.toString());
+                        if (!sourceFile.exists()) {
+                            //Should never happen!
+                            ABCore.errorLogger.accept("File doesn't exist! " + path.toString());
+                            ABCore.logStackTrace(new Exception());
+                            this.erroringFiles.add(path.toString());
+                            continue;
+                        }
+                        zipOutputStream.putNextEntry(new ZipEntry(path.toString()));
 
-                    //We need to handle interrupts in various styles in different parts of the process!
-                    if (this.isInterrupted()) {
-                        zipOutputStream.close();
-                        //again, we need to close the outputstream - otherwise we risk a leak!
-                        throw new InterruptedException();
+                        byte[] bytes = new byte[(int) ConfigManager.buffer.get()];
+                        try (FileInputStream is = new FileInputStream(sourceFile)) {
+                            while (true) {
+                                int i = is.read(bytes);
+                                if (i < 0) break;
+                                zipOutputStream.write(bytes, 0, i);
+                            }
+                        } catch (Exception e) {
+                            ABCore.errorLogger.accept("Error backing up file : " + path.toString());
+                            ABCore.logStackTrace(e);
+                            this.erroringFiles.add(path.toString());
+                        }
+                        zipOutputStream.closeEntry();
+                        index++;
+                        if (!this.shutdown) {
+                            BackupStatusInstance instance = new BackupStatusInstance();
+                            instance.setAge(System.currentTimeMillis());
+                            instance.setMax(max);
+                            instance.setProgress(index);
+                            instance.setState(BackupStatusInstance.State.STARTED);
+                            BackupStatusInstance.setInstance(instance);
+                        }
+
+                        //We need to handle interrupts in various styles in different parts of the process!
+                        if (this.isInterrupted()) {
+                            throw new InterruptedException();
+                        }
                     }
+                    zipOutputStream.flush();
                 }
-                zipOutputStream.flush();
-                zipOutputStream.close();
 
                 time = zip.lastModified();
             } else {
