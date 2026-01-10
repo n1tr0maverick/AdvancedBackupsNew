@@ -26,13 +26,17 @@ public class CoreCommandSystem {
 
     //These methods are all called by relevant command classes in version specific code
     public static void startBackup(Consumer<String> chat) {
+        startBackup(chat, null);
+    }
+
+    public static void startBackup(Consumer<String> chat, String type) {
         chat.accept("Starting backup...");
         BackupWrapper.checkBackups(); //makes sure the backups folder is present etc
         if (ThreadedBackup.running) {
             chat.accept("Cannot start a backup whilst a backup is already running!");
             return;
         }
-        BackupWrapper.makeSingleBackup(0, chat, false);
+        BackupWrapper.makeSingleBackup(0, chat, false, type);
     }
 
     public static void reloadConfig(Consumer<String> chat) {
