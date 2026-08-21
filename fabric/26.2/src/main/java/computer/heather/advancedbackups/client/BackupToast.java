@@ -1,17 +1,18 @@
 package computer.heather.advancedbackups.client;
 
-
 import computer.heather.advancedbackups.core.config.ClientConfigManager;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.resource.language.I18n;
-import net.minecraft.client.toast.Toast;
-import net.minecraft.client.toast.ToastManager;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.toasts.Toast;
+import net.minecraft.client.gui.components.toasts.ToastManager;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public class BackupToast implements Toast {
-        
+
     public static boolean starting;
     public static boolean started;
     public static boolean failed;
@@ -27,6 +28,7 @@ public class BackupToast implements Toast {
     private static boolean timeSet = false;
 
     public static final ItemStack stack = new ItemStack(Items.PAPER);
+    private static final Identifier TEXTURE = Identifier.withDefaultNamespace("toast/advancement");
 
     public static String title = "You shouldn't see this!";
     public static int textColour = 0;
@@ -34,32 +36,32 @@ public class BackupToast implements Toast {
     private Visibility visibility = Visibility.SHOW;
 
     @Override
-    public void draw(DrawContext context, TextRenderer renderer, long startTime) {
-        // Sprite blit APIs changed in 1.21.10; draw a solid toast background so
-        // text and the progress bar remain readable.
-        context.fill(0, 0, this.getWidth(), this.getHeight(), ColourHelper.colour(230, 16, 16, 16));
+    public void extractRenderState(GuiGraphicsExtractor graphics, Font font, long fullyVisibleForMs) {
+        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, TEXTURE, 0, ClientConfigManager.darkMode.get() ? 0 : this.height(), this.width(), this.height());
+        graphics.fakeItem(stack, 8, 8);
 
-        context.drawItemWithoutEntity(stack, 8, 8);;
-        
         float percent = finished ? 100 : (float) progress / (float) max;
-        
-        context.fill(4, 28, 156, 29, ColourHelper.colour
-        (255, (int) ClientConfigManager.progressBackgroundRed.get(), (int) ClientConfigManager.progressBackgroundGreen.get(), (int) ClientConfigManager.progressBackgroundBlue.get()));
 
-        float f = Math.min(156, (
-            156 * percent
-        ));
+        graphics.fill(4, 28, 156, 29, ColourHelper.colour(
+                255,
+                (int) ClientConfigManager.progressBackgroundRed.get(),
+                (int) ClientConfigManager.progressBackgroundGreen.get(),
+                (int) ClientConfigManager.progressBackgroundBlue.get()));
+
+        float f = Math.min(156, (156 * percent));
 
         if (!exists) {
-            if (title.equals(I18n.translate("advancedbackups.backup_finished"))){
+            if (title.equals(I18n.get("advancedbackups.backup_finished"))) {
                 textColour = ColourHelper.colour(255, (int) ClientConfigManager.progressTextRed.get(), (int) ClientConfigManager.progressTextGreen.get(), (int) ClientConfigManager.progressTextBlue.get());
-                context.drawText(renderer, I18n.translate(title), 25, 11, textColour, false);
-                context.fill(4, 28, 156, 29, ColourHelper.colour
-                    (255, (int) ClientConfigManager.progressBarRed.get(), (int) ClientConfigManager.progressBarGreen.get(), (int) ClientConfigManager.progressBarBlue.get()));
-            }
-            else {
+                graphics.text(font, I18n.get(title), 25, 11, textColour, false);
+                graphics.fill(4, 28, 156, 29, ColourHelper.colour(
+                        255,
+                        (int) ClientConfigManager.progressBarRed.get(),
+                        (int) ClientConfigManager.progressBarGreen.get(),
+                        (int) ClientConfigManager.progressBarBlue.get()));
+            } else {
                 textColour = ColourHelper.colour(255, (int) ClientConfigManager.errorTextRed.get(), (int) ClientConfigManager.errorTextGreen.get(), (int) ClientConfigManager.errorTextBlue.get());
-                context.drawText(renderer, I18n.translate(title), 25, 11, textColour, false);
+                graphics.text(font, I18n.get(title), 25, 11, textColour, false);
             }
             visibility = Visibility.HIDE;
             return;
@@ -67,41 +69,36 @@ public class BackupToast implements Toast {
 
         title = "You shouldn't see this!";
 
-        
         if (starting) {
             textColour = ColourHelper.colour(255, (int) ClientConfigManager.progressTextRed.get(), (int) ClientConfigManager.progressTextGreen.get(), (int) ClientConfigManager.progressTextBlue.get());
-            title = I18n.translate("advancedbackups.backup_starting");
-        }
-        else if (started) {
+            title = I18n.get("advancedbackups.backup_starting");
+        } else if (started) {
             textColour = ColourHelper.colour(255, (int) ClientConfigManager.progressTextRed.get(), (int) ClientConfigManager.progressTextGreen.get(), (int) ClientConfigManager.progressTextBlue.get());
-            title = I18n.translate("advancedbackups.progress", round(percent * 100));
-        }
-        else if (failed) {
+            title = I18n.get("advancedbackups.progress", round(percent * 100));
+        } else if (failed) {
             textColour = ColourHelper.colour(255, (int) ClientConfigManager.errorTextRed.get(), (int) ClientConfigManager.errorTextGreen.get(), (int) ClientConfigManager.errorTextBlue.get());
-            title = I18n.translate("advancedbackups.backup_failed");
+            title = I18n.get("advancedbackups.backup_failed");
             if (!timeSet) {
                 time = System.currentTimeMillis();
                 timeSet = true;
             }
-        }
-        else if (finished) {
+        } else if (finished) {
             textColour = ColourHelper.colour(255, (int) ClientConfigManager.progressTextRed.get(), (int) ClientConfigManager.progressTextGreen.get(), (int) ClientConfigManager.progressTextBlue.get());
-            title = I18n.translate("advancedbackups.backup_finished");
+            title = I18n.get("advancedbackups.backup_finished");
             if (!timeSet) {
                 time = System.currentTimeMillis();
                 timeSet = true;
             }
-        }
-        else if (cancelled) {
+        } else if (cancelled) {
             textColour = ColourHelper.colour(255, (int) ClientConfigManager.errorTextRed.get(), (int) ClientConfigManager.errorTextGreen.get(), (int) ClientConfigManager.errorTextBlue.get());
-            title = I18n.translate("advancedbackups.backup_cancelled");
+            title = I18n.get("advancedbackups.backup_cancelled");
             if (!timeSet) {
                 time = System.currentTimeMillis();
                 timeSet = true;
             }
         }
 
-        context.drawText(renderer, title, 25, 11, textColour, false);
+        graphics.text(font, title, 25, 11, textColour, false);
 
         if (timeSet && System.currentTimeMillis() >= time + 5000) {
             starting = false;
@@ -116,27 +113,26 @@ public class BackupToast implements Toast {
             return;
         }
 
-        context.fill(4, 28, Math.max(4, (int) f), 29, ColourHelper.colour
-        (255, (int) ClientConfigManager.progressBarRed.get(), (int) ClientConfigManager.progressBarGreen.get(), (int) ClientConfigManager.progressBarBlue.get()));
-        
+        graphics.fill(4, 28, Math.max(4, (int) f), 29, ColourHelper.colour(
+                255,
+                (int) ClientConfigManager.progressBarRed.get(),
+                (int) ClientConfigManager.progressBarGreen.get(),
+                (int) ClientConfigManager.progressBarBlue.get()));
+
         visibility = Visibility.SHOW;
     }
-    
-    
-    private static String round (float value) {
+
+    private static String round(float value) {
         return String.format("%.1f", value);
     }
 
-
     @Override
-    public Visibility getVisibility() {
+    public Visibility getWantedVisibility() {
         return visibility;
     }
 
-
     @Override
-    public void update(ToastManager manager, long time) {
-        // does this need to do anything?
+    public void update(ToastManager manager, long fullyVisibleForMs) {
+        // Toast lifetime is tracked in extractRenderState.
     }
-
 }

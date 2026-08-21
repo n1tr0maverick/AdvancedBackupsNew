@@ -9,7 +9,7 @@ This is the port for Fabric 1.21.10 (released October 6, 2025).
 - **Java**: 21+
 
 ## Known Issues
-⚠️ **Toast Background Rendering**: The background texture for backup progress toasts is currently disabled due to API changes in 1.21.10. Toast notifications will still appear with text and progress bars, but without the background sprite. This is a visual-only issue and does not affect backup functionality.
+Toast notifications use a solid background instead of the vanilla advancement toast sprite, because `DrawContext.drawGuiTexture` changed in 1.21.10. Text, the item icon, and the progress bar still render. The 26.2 port restores the sprite background.
 
 See `BUILD_NOTES.md` for technical details and development information.
 

@@ -4,16 +4,17 @@
 A powerful backup mod for Minecraft, supporting Neoforge, Forge and Fabric.
 Many Minecraft versions are supported - request more if the one you want isn't yet supported.
 
-### 🆕 Alpha Update: Minecraft 1.21.10 Support
-**Version 3.8-1.21.10** adds support for Minecraft 1.21.10 (The Copper Age hotfix).
+### Minecraft 26.2 Support
+**Version 3.8-26.2** adds Fabric and NeoForge support for Minecraft 26.2 (Chaos Cubed).
 
 | Requirement | Version |
 |-------------|---------|
-| Fabric Loader | 0.16.9+ |
-| Fabric API | 0.137.0+1.21.10 |
-| Java | 21+ |
+| Fabric Loader | 0.19.3+ |
+| Fabric API | 0.157.0+26.2 |
+| NeoForge | 26.2.0.59+ |
+| Java | 25+ |
 
-⚠️ **Known Issue**: Toast notification background textures are temporarily disabled due to rendering API changes in 1.21.10. Notifications still display with text and progress bars - this is purely cosmetic and does not affect backup functionality.
+Toast notifications render with the advancement toast background, text, item icon, and progress bar.
 
 [Supported Versions](#current-versions)
 
@@ -32,6 +33,19 @@ Many Minecraft versions are supported - request more if the one you want isn't y
 [Future Plans](#future-plans)
 
 [Notices](#notices)
+
+## Current Versions
+
+The latest Minecraft release supported here is **26.2**.
+
+| Loader | Minecraft versions |
+|--------|--------------------|
+| Fabric | 1.18, 1.19.2, 1.19.3, 1.20, 1.20.2, 1.20.6, 1.21, 1.21.2, 1.21.10, **26.2** |
+| NeoForge | 1.20.2, 1.20.4, 1.20.6, 1.21, 1.21.2, **26.2** |
+| Forge | 1.7.10, 1.12, 1.16, 1.18, 1.19.2, 1.19.3, 1.20, 1.20.2, 1.20.6 |
+| Spigot | 1.21 |
+
+Minecraft 26.2 requires **Java 25**. Older ports keep their original Java requirements.
 
 ## Features:
 - Command-line restoration tool built into the jar, with helper scripts to run it
