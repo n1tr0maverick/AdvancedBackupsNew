@@ -26,4 +26,6 @@ run
 runs
 run-harness
 harness-gradle.log
+__pycache__/
+*.pyc
 forge*changelog.txt
