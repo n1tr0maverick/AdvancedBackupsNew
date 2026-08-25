@@ -24,4 +24,6 @@ build
 # other
 run
 runs
+run-harness
+harness-gradle.log
 forge*changelog.txt

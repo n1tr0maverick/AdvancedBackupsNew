@@ -12,6 +12,17 @@ base {
 	archivesName = 'AdvancedBackups-' + modloaderName + "-" + minecraftVersion
 }
 
+loom {
+	runs {
+		harnessServer {
+			server()
+			runDir = "run-harness"
+			vmArg "-Xmx2G"
+			programArg "nogui"
+		}
+	}
+}
+
 repositories {
 }
 
