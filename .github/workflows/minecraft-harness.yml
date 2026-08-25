@@ -1,0 +1,55 @@
+# Run Advanced Backups against a live dedicated Minecraft server.
+name: Minecraft harness
+
+on:
+  workflow_dispatch:
+    inputs:
+      loader:
+        description: Mod loader
+        type: choice
+        required: true
+        default: fabric
+        options:
+          - fabric
+          - neoforge
+      mc:
+        description: Minecraft line
+        type: choice
+        required: true
+        default: '26.1'
+        options:
+          - '26.1'
+          - '26.2'
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (core)
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Set up JDK 25 (Minecraft 26.x)
+        uses: actions/setup-java@v4
+        with:
+          java-version: 25
+          distribution: temurin
+
+      - name: Run dedicated-server harness
+        run: python3 scripts/minecraft-harness/run_harness.py --loader ${{ inputs.loader }} --mc ${{ inputs.mc }}
+
+      - name: Upload harness logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harness-${{ inputs.loader }}-${{ inputs.mc }}
+          path: |
+            ${{ inputs.loader }}/${{ inputs.mc }}/harness-gradle.log
+            ${{ inputs.loader }}/${{ inputs.mc }}/run-harness/logs/
+          if-no-files-found: ignore
