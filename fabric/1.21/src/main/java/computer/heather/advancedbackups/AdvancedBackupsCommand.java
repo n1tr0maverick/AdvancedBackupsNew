@@ -18,7 +18,15 @@ public class AdvancedBackupsCommand {
                 runner.getSource().sendFeedback(() -> Text.of(response), true);
             });
             return 1;
-         }))
+         }).then(CommandManager.argument("type", StringArgumentType.word()).suggests((context, builder) -> {
+             return net.minecraft.command.CommandSource.suggestMatching(new String[]{"zip", "differential", "incremental"}, builder);
+         }).executes((runner) -> {
+             String type = StringArgumentType.getString(runner, "type");
+             CoreCommandSystem.startBackup((response) -> {
+                runner.getSource().sendFeedback(() -> Text.of(response), true);
+            }, type);
+            return 1;
+         })))
 
          .then(CommandManager.literal("reload-config").executes((runner) -> {
             CoreCommandSystem.reloadConfig((response) -> {

@@ -45,6 +45,7 @@ public class ThreadedBackup extends Thread {
     private Consumer<String> output;
     private boolean snapshot = false;
     private boolean shutdown = false;
+    private String forcedType = null;
     private ArrayList<String> erroringFiles = new ArrayList<>();
     private String snapshotName = "";
 
@@ -62,6 +63,10 @@ public class ThreadedBackup extends Thread {
         count = 0;
         partialSize = 0F;
         completeSize = 0F;
+    }
+
+    public void setForcedType(String type) {
+        this.forcedType = type;
     }
 
     @Override
@@ -141,7 +146,10 @@ public class ThreadedBackup extends Thread {
             return;
         }
 
-        switch (ConfigManager.type.get()) {
+        String type = ConfigManager.type.get();
+        if (forcedType != null) type = forcedType;
+
+        switch (type) {
             case "zip": {
                 this.makeZipBackup(file, false);
                 break;

@@ -271,10 +271,14 @@ public class BackupWrapper {
 
 
     public static void makeSingleBackup(long delay, boolean shutdown) {
-        makeSingleBackup(delay, s -> {}, shutdown);
+        makeSingleBackup(delay, s -> {}, shutdown, null);
     }
 
     public static void makeSingleBackup(long delay, Consumer<String> output, boolean shutdown) {
+        makeSingleBackup(delay, output, shutdown, null);
+    }
+
+    public static void makeSingleBackup(long delay, Consumer<String> output, boolean shutdown, String type) {
         try {
             if (!shutdown) {
                 ABCore.disableSaving();
@@ -296,6 +300,7 @@ public class BackupWrapper {
         ThreadedBackup.running = true;
         ThreadedBackup threadedBackup = new ThreadedBackup(delay, output);
         if (shutdown) threadedBackup.shutdown();
+        if (type != null) threadedBackup.setForcedType(type);
 
         threadedBackup.start();
         // Don't re-enable saving - leave that down to the backup thread.
